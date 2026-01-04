@@ -7,12 +7,37 @@ import heapq
 from Kleinberg import secretary_kleinberg
 
 
+#---------------- Real Values -------------------
+def generate_real_values_uniform(n: int) -> list[int]:
+    values = []
+    for i in range(n):
+        value = numpy.random.exponential(scale=1) * 100
+        values.append(round(value))
+    return values
+
+def generate_real_values_adversarial(n: int) -> list[int]:
+    values = []
+    for i in range(n):
+        value = numpy.random.exponential(scale=1) * 100
+        values.append(round(value))
+    return values
+
 # ---------------- Predictions -------------------
-def generate_predicted_values(v: list[int], error_rate: float) -> list[int]:
+def generate_predicted_values_uniform(v: list[int], error_rate: float) -> list[int]:
     predictions = []
     for value in v:
-        sigma = error_rate * value
-        prediction = value + random.gauss(0, sigma)
+        prediction = value * (numpy.random.uniform(1 - error_rate, 1 + error_rate))
+        predictions.append(round(prediction))
+    return predictions
+
+def generate_predicted_values_adversarial(v: list[int], error_rate: float) -> list[int]:
+    predictions = []
+    top_half = set(heapq.nlargest(len(v)//2, range(len(v)), key=lambda i: v[i]))  # Indices of top half candidates
+    for i in range(len(v)):
+        if i in top_half:
+            prediction = v[i] * (1 - error_rate)
+        else:
+            prediction = v[i] * (1 + error_rate)
         predictions.append(round(prediction))
     return predictions
 
@@ -49,8 +74,8 @@ def run_algorithm():
         threshold = float(entry_threshold.get())
         error_rate = float(entry_error.get())
 
-        values = [random.randint(0, 1000) for _ in range(n)]
-        predictions = generate_predicted_values(values, error_rate)
+        values = generate_real_values_uniform(n)
+        predictions = generate_predicted_values_uniform(values, error_rate)
 
         hired = learned_kleinberg(threshold, k, predictions, values)
 
@@ -65,6 +90,9 @@ def run_algorithm():
 
     except Exception as e:
         messagebox.showerror("Error", str(e))
+
+
+
 
 
 # --- GUI setup ---
