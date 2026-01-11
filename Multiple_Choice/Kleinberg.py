@@ -3,7 +3,7 @@ import math
 import random
 import numpy 
 
-def secretary_kleinberg(v: list[int], k: int) -> list[int]:
+def secretary_kleinberg(v: list[float], k: int) -> list[float]:
     if k == 0 :
         return []
     elif k == 1 :

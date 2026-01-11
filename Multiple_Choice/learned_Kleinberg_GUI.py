@@ -8,29 +8,45 @@ from Kleinberg import secretary_kleinberg
 
 
 #---------------- Real Values -------------------
-def generate_real_values_uniform(n: int) -> list[int]:
+
+def generate_real_values_uniform(n: int) -> list[float]:
     values = []
     for i in range(n):
-        value = numpy.random.exponential(scale=1) * 100
-        values.append(round(value))
+        value = numpy.random.exponential(scale=1)
+        values.append(value)
     return values
 
-def generate_real_values_adversarial(n: int) -> list[int]:
+def generate_real_values_adversarial(n: int) -> list[float]:
     values = []
     for i in range(n):
-        value = numpy.random.exponential(scale=1) * 100
-        values.append(round(value))
+        value = numpy.random.exponential(scale=1)
+        values.append(value)
     return values
+
+def generate_real_values_almost_constant(n: int, error_rate: float, k: int) -> list[float]:
+    values = [1.0] * n  # All values are 1
+    indices = random.sample(range(n), k)  # Randomly select k different indices to have higher values
+
+    for i in indices:
+        values[i] = 1 / (1 - error_rate)  # Set higher value based on error rate
+
+    for i in range(n):
+        values[i] = values[i] + random.uniform(0, 0.01)
+    
+    return values
+
+
 
 # ---------------- Predictions -------------------
-def generate_predicted_values_uniform(v: list[int], error_rate: float) -> list[int]:
+
+def generate_predicted_values_uniform(v: list[float], error_rate: float) -> list[float]:
     predictions = []
     for value in v:
         prediction = value * (numpy.random.uniform(1 - error_rate, 1 + error_rate))
-        predictions.append(round(prediction))
+        predictions.append(prediction)
     return predictions
 
-def generate_predicted_values_adversarial(v: list[int], error_rate: float) -> list[int]:
+def generate_predicted_values_adversarial(v: list[float], error_rate: float) -> list[float]:
     predictions = []
     top_half = set(heapq.nlargest(len(v)//2, range(len(v)), key=lambda i: v[i]))  # Indices of top half candidates
     for i in range(len(v)):
@@ -38,11 +54,23 @@ def generate_predicted_values_adversarial(v: list[int], error_rate: float) -> li
             prediction = v[i] * (1 - error_rate)
         else:
             prediction = v[i] * (1 + error_rate)
-        predictions.append(round(prediction))
+        predictions.append(prediction)
     return predictions
 
+def generate_predicted_values_almost_constant(v: list[float]) -> list[float]:
+    predictions = [1 for _ in v]
+
+    for i in range(len(predictions)):
+        predictions[i] = predictions[i] + random.uniform(0, 0.01)
+
+    return predictions
+
+
+
+
 # ---------------- Learned Kleinberg Algorithm -------------------
-def learned_kleinberg(threshold: int, k: int, predictions: list[int], values: list[int]) -> list[int]:
+
+def learned_kleinberg(threshold: int, k: int, predictions: list[float], values: list[float]) -> list[float]:
     n = len(predictions)
     predicted_S = heapq.nlargest(k, range(n), key=lambda i: predictions[i]) # Indices of top-k predicted candidates
     S = []  # Final selected candidates
@@ -67,6 +95,9 @@ def learned_kleinberg(threshold: int, k: int, predictions: list[int], values: li
                 return S
     return S
 
+
+
+# ---------------- GUI Application -------------------
 def run_algorithm():
     try:
         n = int(entry_n.get())
@@ -74,8 +105,17 @@ def run_algorithm():
         threshold = float(entry_threshold.get())
         error_rate = float(entry_error.get())
 
-        values = generate_real_values_uniform(n)
-        predictions = generate_predicted_values_uniform(values, error_rate)
+        # values = generate_real_values_uniform(n)
+        # predictions = generate_predicted_values_uniform(values, error_rate)
+
+        values = generate_real_values_adversarial(n)
+        predictions = generate_predicted_values_adversarial(values, error_rate)
+
+        # values = generate_real_values_almost_constant(n, error_rate, k)
+        # predictions = generate_predicted_values_almost_constant(values)
+
+        for i in range(n):
+            print(f"Candidate {i}: Real Value = {values[i]}, Predicted Value = {predictions[i]}")
 
         hired = learned_kleinberg(threshold, k, predictions, values)
 

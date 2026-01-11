@@ -2,7 +2,7 @@ import numpy as np
 import math
 import random
 
-def secretary_dynkin(values: list[int]) -> int | None:
+def secretary_dynkin(values: list[float]) -> int | None:
     n = len(values)
 
     for i in range(n):
