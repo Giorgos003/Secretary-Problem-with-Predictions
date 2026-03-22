@@ -1,127 +1,124 @@
 import tkinter as tk
 from tkinter import ttk
+from tkinter import messagebox
 import random
+from learned_dynkin import generate_real_values_uniform, generate_predicted_values_uniform, generate_real_values_adversarial, generate_predicted_values_adversarial, generate_real_values_almost_constant, generate_predicted_values_almost_constant
 
-# ---------------- Algorigthm -------------------
 
-def learned_Dynkin(tau: float, theta: float, v: list[int], v_hat: list[int]):
+
+def learned_Dynkin(tau : float, theta : float, v : list[float], predictions : list[float]):
+
     n = len(v)
     candidates = list(range(n)) 
+    
     random.shuffle(candidates)
+    arrival_times = {i: random.random() for i in candidates}
+    candidates.sort(key=lambda i: arrival_times[i])
 
-    i_hat = max(range(n), key=lambda i: v_hat[i])
-    output = []
-    output.append(f"Best predicted candidate is {i_hat} with predicted value {v_hat[i_hat]} and real value {v[i_hat]}")
-    output.append("---------------------------------------------")
+    log = []
+    for i in range(n):
+        log.append(f"Candidate {candidates[i]} arrives at time {arrival_times[candidates[i]]:.3f} with value {v[candidates[i]]} and predicted value {predictions[candidates[i]]}")
+    log.append("---------------------------------------------")
+
+    best_predicted_value = max(range(n), key=lambda i: predictions[i])
+    best_real_value = max(range(n), key=lambda i: v[i])
+    log.append(f"Best predicted candidate is {best_predicted_value} with predicted value {predictions[best_predicted_value]} and real value {v[best_predicted_value]} and arrived at time {arrival_times[best_predicted_value]:.3f}")
+    log.append(f"Best real candidate is {best_real_value} with real value {v[best_real_value]} and predicted value {predictions[best_real_value]} and arrived at time {arrival_times[best_real_value]:.3f}")
+    log.append("---------------------------------------------")
 
     mode = "PREDICTION"
     best_so_far = -float("inf")
     hired = None
 
-    arrival_times = {i: random.random() for i in candidates}
-    candidates.sort(key=lambda i: arrival_times[i])
-
-    for i in range(n):
-        output.append(
-            f"Candidate {candidates[i]} arrives at time {arrival_times[candidates[i]]:.3f} "
-            f"with value {v[candidates[i]]} and predicted value {v_hat[candidates[i]]}"
-        )
-
-    output.append("---------------------------------------------")
-
     for i in candidates:
-        if v[i] >= best_so_far:
-            best_so_far = v[i]
-
-        if abs(1 - v_hat[i] / v[i]) > theta:
-            output.append(
-                f"Switching to SECRETARY mode at candidate {i} "
-                f"(predicted value {v_hat[i]}, error={abs(1 - v_hat[i] / v[i]):.3f})"
-            )
+        if abs(1 - predictions[i] / v[i]) > theta:
+            log.append(f"Switching to SECRETARY mode at candidate {i} (predicted value {predictions[i]}, {abs(1 - predictions[i] / v[i]):.3f} > {theta}) and arrived at time {arrival_times[i]:.3f} where τ={tau}")
             mode = "SECRETARY"
-
-        if mode == "PREDICTION" and i == i_hat:
+        if mode == "PREDICTION" and i==best_predicted_value:
             hired = i
-            break
-
+            break        
         if mode == "SECRETARY" and arrival_times[i] > tau and v[i] >= best_so_far:
             best_so_far = v[i]
             hired = i
             break
+        if (v[i] >= best_so_far): 
+                best_so_far = v[i]
+            
+    
+    log.append(f"Hired candidate: {hired}, Value: {v[hired] if hired is not None else None}, Mode: {mode}")
+    return hired, log
 
-    output.append(f"Hired candidate: {hired}, Value: {v[hired] if hired is not None else None}, Mode: {mode}")
-    return "\n".join(output)
+# ---------------- UI ----------------
 
+class App:
+    def __init__(self, root):
+        self.root = root
+        self.root.title("Learned Dynkin Simulator")
+        self.root.geometry("800x600")
 
-# ---------------- Predictions -------------------
-def generate_predicted_values(v: list[int], error_rate: float) -> list[int]:
-    v_hat = []
-    for value in v:
-        sigma = error_rate * value
-        prediction = value + random.gauss(0, sigma)
-        v_hat.append(round(prediction))
-    return v_hat
+        frame = ttk.Frame(root, padding=10)
+        frame.pack(fill="x")
 
+        ttk.Label(frame, text="Number of candidates:").grid(row=0, column=0, sticky="w")
+        self.n_entry = ttk.Entry(frame)
+        self.n_entry.grid(row=0, column=1)
 
+        ttk.Label(frame, text="Tau:").grid(row=1, column=0, sticky="w")
+        self.tau_entry = ttk.Entry(frame)
+        self.tau_entry.insert(0, "0.313")
+        self.tau_entry.grid(row=1, column=1)
 
-# ---------------- GUI -------------------
+        ttk.Label(frame, text="Theta:").grid(row=2, column=0, sticky="w")
+        self.theta_entry = ttk.Entry(frame)
+        self.theta_entry.insert(0, "0.646")
+        self.theta_entry.grid(row=2, column=1)
 
-def run_algorithm():
-    try:
-        n = int(entry_n.get())
-        tau = float(entry_tau.get())
-        theta = float(entry_theta.get())
-        error_rate = float(entry_error.get())
-    except ValueError:
-        result_box.delete("1.0", tk.END)
-        result_box.insert(tk.END, "Λάθος στις εισόδους.")
-        return
+        ttk.Label(frame, text="Error rate:").grid(row=3, column=0, sticky="w")
+        self.error_rate_entry = ttk.Entry(frame)
+        self.error_rate_entry.insert(0, "0.7")
+        self.error_rate_entry.grid(row=3, column=1)
 
+        run_btn = ttk.Button(frame, text="Run Simulation", command=self.run)
+        run_btn.grid(row=4, column=0, columnspan=2, pady=10)
 
-    if error_rate < 0:
-        error_rate = 0
-    if error_rate > 1:
-        error_rate = 1
+        frame_output = ttk.Frame(root)
+        frame_output.pack(fill="both", expand=True, padx=10, pady=10)
 
-    v = [random.randint(0, 1000) for _ in range(n)]
-    v_hat = generate_predicted_values(v, error_rate)
+        scrollbar = ttk.Scrollbar(frame_output)
+        scrollbar.pack(side="right", fill="y")
 
-    result = (
-        f"Πραγματικές τιμές: {v}\n"
-        f"Προβλέψεις: {v_hat}\n\n" +
-        learned_Dynkin(tau, theta, v, v_hat)
-    )
+        self.output = tk.Text(frame_output, wrap="word", yscrollcommand=scrollbar.set)
+        self.output.pack(side="left", fill="both", expand=True)
 
-    result_box.delete("1.0", tk.END)
-    result_box.insert(tk.END, result)
+        scrollbar.config(command=self.output.yview)
 
+    def run(self):
+        try:
+            n = int(self.n_entry.get())
+            tau = float(self.tau_entry.get())
+            theta = float(self.theta_entry.get())
+        except ValueError:
+            messagebox.showerror("Error", "Invalid input values")
+            return
 
-root = tk.Tk()
-root.title("Learned Dynkin GUI")
+        # Uniformly distributed values and predictions
+        print("\n--- Uniformly distributed values and predictions ---")
+        real_values = generate_real_values_uniform(n)
+        predictions = generate_predicted_values_uniform(real_values, error_rate=0.7)
 
-frm = ttk.Frame(root, padding=10)
-frm.grid()
+        hired, log = learned_Dynkin(tau, theta, real_values, predictions)
 
-ttk.Label(frm, text="Πλήθος υποψηφίων (n):").grid(column=0, row=0, sticky="w")
-entry_n = ttk.Entry(frm)
-entry_n.grid(column=1, row=0)
+        self.output.delete(1.0, tk.END)
+        self.output.insert(tk.END, f"Real values: {real_values}\n")
+        self.output.insert(tk.END, f"Predictions: {predictions}\n\n")
 
-ttk.Label(frm, text="Cutoff τ:").grid(column=0, row=1, sticky="w")
-entry_tau = ttk.Entry(frm)
-entry_tau.grid(column=1, row=1)
+        for line in log:
+            self.output.insert(tk.END, line + "\n")
 
-ttk.Label(frm, text="Ανοχή σφάλματος θ:").grid(column=0, row=2, sticky="w")
-entry_theta = ttk.Entry(frm)
-entry_theta.grid(column=1, row=2)
+# ---------------- MAIN ----------------
 
-ttk.Label(frm, text="Ποσοστό σφάλματος (π.χ. 0.2):").grid(column=0, row=3, sticky="w")
-entry_error = ttk.Entry(frm)
-entry_error.grid(column=1, row=3)
+if __name__ == "__main__":
+    root = tk.Tk()
+    app = App(root)
+    root.mainloop()
 
-run_button = ttk.Button(frm, text="Τρέξε", command=run_algorithm)
-run_button.grid(column=0, row=4, columnspan=2, pady=10)
-
-result_box = tk.Text(frm, width=80, height=25)
-result_box.grid(column=0, row=5, columnspan=2)
-
-root.mainloop()
