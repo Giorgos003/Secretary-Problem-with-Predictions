@@ -6,10 +6,10 @@ from learned_dynkin import generate_real_values_uniform, generate_predicted_valu
 
 
 
-def learned_Dynkin(tau : float, theta : float, v : list[float], predictions : list[float]):
+def learned_Dynkin(tau : float, theta : float, real_values : list[float], predictions : list[float]):
 
-    n = len(v)
-    candidates = list(range(n)) 
+    n = len(real_values)
+    candidates = list(range(n))
     
     random.shuffle(candidates)
     arrival_times = {i: random.random() for i in candidates}
@@ -17,13 +17,13 @@ def learned_Dynkin(tau : float, theta : float, v : list[float], predictions : li
 
     log = []
     for i in range(n):
-        log.append(f"Candidate {candidates[i]} arrives at time {arrival_times[candidates[i]]:.3f} with value {v[candidates[i]]} and predicted value {predictions[candidates[i]]}")
+        log.append(f"Candidate {candidates[i]} arrives at time {arrival_times[candidates[i]]:.6f} with value {real_values[candidates[i]]} and predicted value {predictions[candidates[i]]}")
     log.append("---------------------------------------------")
 
     best_predicted_value = max(range(n), key=lambda i: predictions[i])
-    best_real_value = max(range(n), key=lambda i: v[i])
-    log.append(f"Best predicted candidate is {best_predicted_value} with predicted value {predictions[best_predicted_value]} and real value {v[best_predicted_value]} and arrived at time {arrival_times[best_predicted_value]:.3f}")
-    log.append(f"Best real candidate is {best_real_value} with real value {v[best_real_value]} and predicted value {predictions[best_real_value]} and arrived at time {arrival_times[best_real_value]:.3f}")
+    best_real_value = max(range(n), key=lambda i: real_values[i])
+    log.append(f"Best predicted candidate is {best_predicted_value} with predicted value {predictions[best_predicted_value]} and real value {real_values[best_predicted_value]} and arrived at time {arrival_times[best_predicted_value]:.6f}")
+    log.append(f"Best real candidate is {best_real_value} with real value {real_values[best_real_value]} and predicted value {predictions[best_real_value]} and arrived at time {arrival_times[best_real_value]:.6f}")
     log.append("---------------------------------------------")
 
     mode = "PREDICTION"
@@ -31,22 +31,24 @@ def learned_Dynkin(tau : float, theta : float, v : list[float], predictions : li
     hired = None
 
     for i in candidates:
-        if abs(1 - predictions[i] / v[i]) > theta:
-            log.append(f"Switching to SECRETARY mode at candidate {i} (predicted value {predictions[i]}, {abs(1 - predictions[i] / v[i]):.3f} > {theta}) and arrived at time {arrival_times[i]:.3f} where τ={tau}")
+        if abs(1 - predictions[i] / real_values[i]) > theta:
+            log.append(f"Switching to SECRETARY mode at candidate {i} (predicted value {predictions[i]}, {abs(1 - predictions[i] / real_values[i]):.3f} > {theta}) and arrived at time {arrival_times[i]:.6f} where τ={tau}")
             mode = "SECRETARY"
         if mode == "PREDICTION" and i==best_predicted_value:
             hired = i
             break        
-        if mode == "SECRETARY" and arrival_times[i] > tau and v[i] >= best_so_far:
-            best_so_far = v[i]
+        if mode == "SECRETARY" and arrival_times[i] > tau and real_values[i] > best_so_far:
+            best_so_far = real_values[i]
             hired = i
-            break
-        if (v[i] >= best_so_far): 
-                best_so_far = v[i]
-            
+            break   
+        if (real_values[i] > best_so_far): 
+                best_so_far = real_values[i]
     
-    log.append(f"Hired candidate: {hired}, Value: {v[hired] if hired is not None else None}, Mode: {mode}")
+    log.append(f"Hired candidate: {hired}, Value: {real_values[hired] if hired is not None else None}, Mode: {mode}")
     return hired, log
+
+
+
 
 # ---------------- UI ----------------
 
