@@ -8,7 +8,7 @@ def secretary_kleinberg(v: list[float], k: int) -> list[float]:
         return []
     elif k == 1 :
         hired = secretary_dynkin(v)
-        return [hired] if hired is not None else []
+        return [hired] if hired is not None else [] # We should check if Dynkin hired someone, because it returns None otherwise.
     elif k > 1 :
         n = len(v)
         l = math.floor(k/2)
@@ -40,7 +40,10 @@ def secretary_kleinberg(v: list[float], k: int) -> list[float]:
 if __name__ == "__main__":
     n = int(input("Number of candidates: "))
     k = int(input("Number of hires (k): "))
-    values = [random.randint(0, 100) for _ in range(n)] 
+    values = []
+    for i in range(n):
+        value = random.randint(0, 100)
+        values.append(value)
 
     print(f"Candidate values: {values}\n")
     hired_candidates = secretary_kleinberg(values, k)
