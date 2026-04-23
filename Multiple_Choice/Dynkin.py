@@ -10,7 +10,7 @@ def secretary_dynkin(values: list[float]) -> int | None:
 
     best_so_far = -float("inf") 
     threshold_index = math.ceil(n / math.e)
-    print(f"Observation phase ends at candidate index: {threshold_index}") # I want to stop the observation phase at the n/e-th candidate.
+    print(f"Observation phase ends at candidate with index: {threshold_index - 1}") # I want to stop the observation phase at the n/e-th candidate.
 
     # Observation phase for the first n/e candidates
     for i in range(threshold_index):
