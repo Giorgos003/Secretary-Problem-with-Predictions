@@ -80,8 +80,21 @@ class App:
         self.error_rate_entry.insert(0, "0.7")
         self.error_rate_entry.grid(row=3, column=1)
 
+        distr_label = tk.Label(frame, text="Distribution Mode")
+        distr_label.grid(row=4, column=0, sticky="w", padx=15, pady=10)
+
+        self.distr_var = tk.StringVar(value="Uniform")
+
+        distr_dropdown = ttk.Combobox(
+            frame,
+            textvariable=self.distr_var,
+            values=["Uniform", "Adversarial", "Almost Constant"],
+            state="readonly",
+        )
+        distr_dropdown.grid(row=4, column=1, sticky="w", padx=15, pady=10)
+
         run_btn = ttk.Button(frame, text="Run Simulation", command=self.run)
-        run_btn.grid(row=4, column=0, columnspan=2, pady=10)
+        run_btn.grid(row=5, column=0, columnspan=2, pady=10)
 
         frame_output = ttk.Frame(root)
         frame_output.pack(fill="both", expand=True, padx=10, pady=10)
@@ -99,14 +112,27 @@ class App:
             n = int(self.n_entry.get())
             tau = float(self.tau_entry.get())
             theta = float(self.theta_entry.get())
+            error_rate = float(self.error_rate_entry.get())
+            distribution_mode = self.distr_var.get()
         except ValueError:
             messagebox.showerror("Error", "Invalid input values")
             return
 
-        # Uniformly distributed values and predictions
-        print("\n--- Uniformly distributed values and predictions ---")
-        real_values = generate_real_values_uniform(n)
-        predictions = generate_predicted_values_uniform(real_values, error_rate=0.7)
+        if distribution_mode == "Uniform":
+            # Uniformly distributed values and predictions
+            print("\n--- Uniformly distributed values and predictions ---")
+            real_values = generate_real_values_uniform(n)
+            predictions = generate_predicted_values_uniform(real_values, error_rate=error_rate)
+        elif distribution_mode == "Adversarial":
+            # Adversarially distributed values and predictions
+            print("\n--- Adversarially distributed values and predictions ---")
+            real_values = generate_real_values_adversarial(n)
+            predictions = generate_predicted_values_adversarial(real_values, error_rate=error_rate)
+        elif distribution_mode == "Almost Constant":
+            # Almost constant values and predictions
+            print("\n--- Almost constant values and predictions ---")
+            real_values = generate_real_values_almost_constant(n, error_rate=error_rate, k=1) # r takes the k value, where is one for classical secretary problem
+            predictions = generate_predicted_values_almost_constant(real_values)
 
         hired, log = learned_Dynkin(tau, theta, real_values, predictions)
 

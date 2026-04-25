@@ -26,6 +26,6 @@ def generate_predicted_values_almost_constant(v: list[float]) -> list[float]:
     predictions = [1 for _ in v]
 
     for i in range(len(predictions)):
-        predictions[i] = predictions[i] * random.uniform(0, 0.01)
+        predictions[i] = predictions[i] + predictions[i] * random.uniform(0, 0.01)
 
     return predictions
