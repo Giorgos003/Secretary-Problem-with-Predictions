@@ -16,7 +16,8 @@ def learned_kleinberg(threshold: int, k: int, predictions: list[float], values: 
     predicted_S = heapq.nlargest(k, range(n), key=lambda i: predictions[i])
 
     log = []
-    log.append(f"Predicted top {k} candidates: {predicted_S} \n")
+    log.append(f"Predicted top {k} candidates: {predicted_S}\n")
+    log.append(f"Real top {k} candidates: {heapq.nlargest(k, range(n), key=lambda i: values[i])} \n")
     S = [] 
     
     for i in range(n):
@@ -25,7 +26,7 @@ def learned_kleinberg(threshold: int, k: int, predictions: list[float], values: 
             k = k - len(S) - 1  
             S.append(i) 
 
-            remaining_candidates = predictions[i+1:]
+            remaining_candidates = values[i+1:]
             log.append(f"Remaining candidates for Kleinberg's algorithm: {remaining_candidates}, k = {k}")
             hired_candidates = secretary_kleinberg(remaining_candidates, k)
             for hired_candidate in hired_candidates:

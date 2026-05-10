@@ -11,9 +11,10 @@ def learned_Dynkin(tau : float, theta : float, real_values : list[float], predic
     n = len(real_values)
     candidates = list(range(n))
     
-    random.shuffle(candidates)
-    arrival_times = {i: random.random() for i in candidates}
-    candidates.sort(key=lambda i: arrival_times[i])
+    # random.shuffle(candidates)
+    # arrival_times = {i: random.random() for i in candidates}
+    arrival_times = {i: i / n for i in candidates}
+    # candidates.sort(key=lambda i: arrival_times[i])
 
     log = []
     for i in range(n):
