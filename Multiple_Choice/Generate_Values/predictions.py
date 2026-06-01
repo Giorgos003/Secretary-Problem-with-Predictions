@@ -16,9 +16,9 @@ def generate_predicted_values_adversarial(v: list[float], error_rate: float) -> 
     top_half = set(heapq.nlargest(len(v)//2, range(len(v)), key=lambda i: v[i]))  # Indices of top half candidates
     for i in range(len(v)):
         if i in top_half:
-            prediction = v[i] * (1 - error_rate)
+            prediction = v[i] * (1 - numpy.random.uniform(0, error_rate))
         else:
-            prediction = v[i] * (1 + error_rate)
+            prediction = v[i] * (1 + numpy.random.uniform(0, error_rate))
         predictions.append(prediction)
     return predictions
 
