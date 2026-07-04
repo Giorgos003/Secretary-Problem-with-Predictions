@@ -3,13 +3,12 @@ from Generate_Values.real_values import generate_real_values_uniform, generate_r
 from Generate_Values.predictions import generate_predicted_values_uniform, generate_predicted_values_adversarial, generate_predicted_values_almost_constant
 
 
-def learned_Dynkin(tau : float, theta : float, v : list[float], predictions : list[float]):
+def learned_Dynkin(tau : float, theta : float, v : list[float], arrival_times : list[float], predictions : list[float]):
 
     n = len(v)
     candidates = list(range(n)) 
     
     random.shuffle(candidates)
-    arrival_times = {i: random.random() for i in candidates}   # assign random arrival times
     candidates.sort(key=lambda i: arrival_times[i]) # sort candidates by arrival time
     for i in range(n):
         print(f"Candidate {candidates[i]} arrives at time {arrival_times[candidates[i]]:.3f} with value {v[candidates[i]]} and predicted value {predictions[candidates[i]]}")
@@ -44,13 +43,14 @@ def learned_Dynkin(tau : float, theta : float, v : list[float], predictions : li
     return hired
 
 
-# Example usage
 if __name__ == "__main__":
     tau = 0.313
     theta = 0.646
 
     # Τυχαίες τιμές υποψηφίων
     n = int(input("Πόσοι υποψήφιοι; "))
+
+    arrival_times = {i: random.random() for i in range(n)}  
 
     # Uniformly distributed values and predictions
     print("\n--- Uniformly distributed values and predictions ---")
@@ -69,4 +69,4 @@ if __name__ == "__main__":
     print(f"Προβλέψεις: {predictions}\n")
 
 
-    learned_Dynkin(tau, theta, v, predictions)
+    learned_Dynkin(tau, theta, v, arrival_times, predictions)

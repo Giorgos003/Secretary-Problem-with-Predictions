@@ -6,15 +6,12 @@ from learned_dynkin import generate_real_values_uniform, generate_predicted_valu
 
 
 
-def learned_Dynkin(tau : float, theta : float, real_values : list[float], predictions : list[float]):
+def learned_Dynkin(tau : float, theta : float, real_values : list[float], arrival_times : list[float], predictions : list[float]):
 
     n = len(real_values)
     candidates = list(range(n))
-    
-    # random.shuffle(candidates)
-    # arrival_times = {i: random.random() for i in candidates}
-    arrival_times = {i: i / n for i in candidates}
-    # candidates.sort(key=lambda i: arrival_times[i])
+
+    candidates.sort(key=lambda i: arrival_times[i])
 
     log = []
     for i in range(n):
@@ -33,7 +30,8 @@ def learned_Dynkin(tau : float, theta : float, real_values : list[float], predic
 
     for i in candidates:
         if abs(1 - predictions[i] / real_values[i]) > theta:
-            log.append(f"Switching to SECRETARY mode at candidate {i} (predicted value {predictions[i]}, {abs(1 - predictions[i] / real_values[i]):.3f} > {theta}) and arrived at time {arrival_times[i]:.6f} where τ={tau}")
+            if (mode != "SECRETARY"):
+                log.append(f"Switching to SECRETARY mode at candidate {i} (predicted value {predictions[i]}, {abs(1 - predictions[i] / real_values[i]):.3f} > {theta}) and arrived at time {arrival_times[i]:.6f} where τ={tau}")
             mode = "SECRETARY"
         if mode == "PREDICTION" and i==best_predicted_value:
             hired = i
@@ -94,8 +92,39 @@ class App:
         )
         distr_dropdown.grid(row=4, column=1, sticky="w", padx=15, pady=10)
 
+
+        self.input_mode = tk.StringVar(value="random")
+
+        ttk.Radiobutton(
+            frame,
+            text="Random Values",
+            variable=self.input_mode,
+            value="random"
+        ).grid(row=5, column=0, sticky="w")
+
+        ttk.Radiobutton(
+            frame,
+            text="Manual Values",
+            variable=self.input_mode,
+            value="manual"
+        ).grid(row=5, column=1, sticky="w")
+
+        ttk.Label(frame, text="Manual Values (comma separated):").grid(
+            row=6, column=0, sticky="w"
+        )
+
+        self.manual_values_entry = ttk.Entry(frame, width=75)
+        self.manual_values_entry.grid(row=6, column=1)
+
+        ttk.Label(frame, text="Manual Predictions (comma separated):").grid(
+            row=7, column=0, sticky="w"
+        )
+
+        self.manual_predictions_entry = ttk.Entry(frame, width=75)
+        self.manual_predictions_entry.grid(row=7, column=1)
+
         run_btn = ttk.Button(frame, text="Run Simulation", command=self.run)
-        run_btn.grid(row=5, column=0, columnspan=2, pady=10)
+        run_btn.grid(row=8, column=0, columnspan=2, pady=10)
 
         frame_output = ttk.Frame(root)
         frame_output.pack(fill="both", expand=True, padx=10, pady=10)
@@ -109,6 +138,7 @@ class App:
         scrollbar.config(command=self.output.yview)
 
     def run(self):
+
         try:
             n = int(self.n_entry.get())
             tau = float(self.tau_entry.get())
@@ -119,27 +149,46 @@ class App:
             messagebox.showerror("Error", "Invalid input values")
             return
 
-        if distribution_mode == "Uniform":
-            # Uniformly distributed values and predictions
-            print("\n--- Uniformly distributed values and predictions ---")
-            real_values = generate_real_values_uniform(n)
-            predictions = generate_predicted_values_uniform(real_values, error_rate=error_rate)
-        elif distribution_mode == "Adversarial":
-            # Adversarially distributed values and predictions
-            print("\n--- Adversarially distributed values and predictions ---")
-            real_values = generate_real_values_adversarial(n)
-            predictions = generate_predicted_values_adversarial(real_values, error_rate=error_rate)
-        elif distribution_mode == "Almost Constant":
-            # Almost constant values and predictions
-            print("\n--- Almost constant values and predictions ---")
-            real_values = generate_real_values_almost_constant(n, error_rate=error_rate, k=1) # r takes the k value, where is one for classical secretary problem
-            predictions = generate_predicted_values_almost_constant(real_values)
 
-        hired, log = learned_Dynkin(tau, theta, real_values, predictions)
+        mode = self.input_mode.get()
+
+        if mode == "manual":
+            try:
+                real_values = [float(x.strip()) for x in self.manual_values_entry.get().split(",")]
+                predictions = [float(x.strip()) for x in self.manual_predictions_entry.get().split(",")]
+                arrival_times = {i: i / n for i in range(n)}  # Uniform arrival times for manual input
+            except ValueError:
+                messagebox.showerror("Error", "Invalid manual values or predictions")
+                return
+            
+            if len(real_values) != len(predictions):
+                messagebox.showerror(
+                    "Error",
+                    "Values and predictions must have the same length."
+                )
+                return
+        else: 
+
+            if distribution_mode == "Uniform":
+                # Uniformly distributed values and predictions
+                print("\n--- Uniformly distributed values and predictions ---")
+                real_values = generate_real_values_uniform(n)
+                predictions = generate_predicted_values_uniform(real_values, error_rate=error_rate)
+            elif distribution_mode == "Adversarial":
+                # Adversarially distributed values and predictions
+                print("\n--- Adversarially distributed values and predictions ---")
+                real_values = generate_real_values_adversarial(n)
+                predictions = generate_predicted_values_adversarial(real_values, error_rate=error_rate)
+            elif distribution_mode == "Almost Constant":
+                # Almost constant values and predictions
+                print("\n--- Almost constant values and predictions ---")
+                real_values = generate_real_values_almost_constant(n, error_rate=error_rate, k=1) # r takes the k value, where is one for classical secretary problem
+                predictions = generate_predicted_values_almost_constant(real_values)
+            arrival_times = {i: random.random() for i in range(n)}
+
+        hired, log = learned_Dynkin(tau, theta, real_values, arrival_times, predictions)
 
         self.output.delete(1.0, tk.END)
-        self.output.insert(tk.END, f"Real values: {real_values}\n")
-        self.output.insert(tk.END, f"Predictions: {predictions}\n\n")
 
         for line in log:
             self.output.insert(tk.END, line + "\n")
