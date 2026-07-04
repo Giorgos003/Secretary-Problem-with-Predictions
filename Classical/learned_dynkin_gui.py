@@ -4,10 +4,18 @@ from tkinter import messagebox
 import random
 from learned_dynkin import generate_real_values_uniform, generate_predicted_values_uniform, generate_real_values_adversarial, generate_predicted_values_adversarial, generate_real_values_almost_constant, generate_predicted_values_almost_constant
 
-
+# ------------------ Learned Dynkin Algorithm -------------------
 
 def learned_Dynkin(tau : float, theta : float, real_values : list[float], arrival_times : list[float], predictions : list[float]):
-
+    """
+    Implements the Learned Dynkin algorithm for the secretary problem with predictions.
+    Parameters:
+    - tau: The threshold time after which candidates can be hired in SECRETARY mode.
+    - theta: The threshold for switching from PREDICTION mode to SECRETARY mode based on prediction accuracy.
+    - real_values: A list of real values of the candidates.
+    - arrival_times: A list of arrival times for the candidates, uniformly distributed in [0, 1].
+    - predictions: A list of predicted values for the candidates.
+    """
     n = len(real_values)
     candidates = list(range(n))
 
@@ -139,12 +147,13 @@ class App:
 
     def run(self):
 
+        # Get input values
         try:
-            n = int(self.n_entry.get())
-            tau = float(self.tau_entry.get())
-            theta = float(self.theta_entry.get())
-            error_rate = float(self.error_rate_entry.get())
-            distribution_mode = self.distr_var.get()
+            n = int(self.n_entry.get())     # number of candidates
+            tau = float(self.tau_entry.get())   # threshold time for SECRETARY mode
+            theta = float(self.theta_entry.get())   # threshold for switching modes
+            error_rate = float(self.error_rate_entry.get())     # error rate for predictions
+            distribution_mode = self.distr_var.get()    # distribution mode for generating values and predictions
         except ValueError:
             messagebox.showerror("Error", "Invalid input values")
             return
@@ -152,6 +161,8 @@ class App:
 
         mode = self.input_mode.get()
 
+        # Generate real values, predictions, and arrival times based on the selected mode
+        # if mode is "manual", use the values from the manual input fields, otherwise generate them based on the selected distribution mode
         if mode == "manual":
             try:
                 real_values = [float(x.strip()) for x in self.manual_values_entry.get().split(",")]
