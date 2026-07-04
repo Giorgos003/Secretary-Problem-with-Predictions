@@ -12,9 +12,6 @@ def secretary_dynkin(values: list[float], arrival_times: list[float], threshold:
     candidates = list(range(n))
     candidates.sort(key=lambda i: arrival_times[i])
 
-    # for i in candidates:
-    #     print(f"Candidate {i} arrives at time {arrival_times[i]} with value {values[i]}")
-
     best_so_far = -float("inf") 
 
     best_candidate = max(range(n), key=lambda i: values[i])
@@ -27,10 +24,9 @@ def secretary_dynkin(values: list[float], arrival_times: list[float], threshold:
             if values[candidate] > best_so_far:
                 hired = candidate
                 if hired == best_candidate:
-                    # print(f"Hired the best candidate: {hired}, Value: {values[hired]}, Arrival time: {arrival_times[hired]}")
                     return hired
                 else:
-                    return None
+                   return None
         
     return None
 
@@ -50,7 +46,9 @@ def experiment(threshold, runs=1000):
     success = 0
 
     for _ in range(runs):
-        if secretary_dynkin(generate_real_values_uniform(n), [random.random() for _ in range(n)], threshold) is not None:
+        values = generate_real_values_uniform(n)
+        arrival_times = {i: random.random() for i in range(n)}
+        if secretary_dynkin(values, arrival_times, threshold) is not None:
             success += 1
 
     print(f"Threshold: {threshold:.2f}, Successes: {success}")
@@ -71,7 +69,6 @@ if __name__ == "__main__":
         print(f"t={t:.3f} → success={success_rate:.3f}")
         x_thresholds.append(t)
         y_success_rates.append(success_rate)
-
     fig = go.Figure()
 
     # Προσθήκη της καμπύλης για το success rate

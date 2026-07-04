@@ -5,10 +5,27 @@ import random
 
 
 def generate_real_values_uniform(n):
+    """
+    Generates a list of n real values from an exponential distribution.
+    Parameters:
+    - n: The number of values to generate.
+    Returns:
+    - A list of n real values.
+    """
     return list(np.random.exponential(scale=1, size=n))
 
 
-def secretary_dynkin(values, arrival_times, threshold):
+
+def secretary_dynkin(values: list[float], arrival_times: list[float], threshold: float) -> int | None:
+    """
+    Implements the classical secretary problem algorithm.
+    Parameters:
+    - values: A list of values of the candidates.
+    - arrival_times: A list of arrival times for the candidates, uniformly distributed in [0, 1].
+    - threshold: The threshold time which determines the selection phase. Candidates arriving before this time are observed but not selected.
+    Returns:
+    - The index of the hired candidate, or None if no candidate is hired.
+    """
     n = len(values)
 
     candidates = list(range(n))
@@ -35,7 +52,7 @@ def secretary_dynkin(values, arrival_times, threshold):
     best_so_far = -float("inf")
 
     for candidate in candidates:
-        if arrival_times[candidate] < threshold:
+        if arrival_times[candidate] <= threshold:
             best_so_far = max(best_so_far, values[candidate])
         else:
             if values[candidate] > best_so_far:
@@ -53,18 +70,21 @@ def secretary_dynkin(values, arrival_times, threshold):
 
 def run_simulation():
     try:
-        n = int(n_entry.get())
-        threshold = float(threshold_entry.get())
+        n = int(n_entry.get())  # number of candidates
+        threshold = float(threshold_entry.get())    # threshold for the observation phase
 
+        # If the user selects manual input, we will get the values from the entry field. Otherwise, we will generate random values.
         if input_mode.get() == "manual":
             values = [float(x.strip()) for x in values_entry.get().split(",")]
 
             if len(values) != n:
                 raise ValueError(f"You entered {len(values)} values but n = {n}")
+            
+            arrival_times = {i: i / n for i in range(n)}    # uniform arrival times for manual input
         else:
             values = generate_real_values_uniform(n)
-        
-        arrival_times = [random.random() for _ in range(n)]
+            arrival_times = {i: random.random() for i in range(n)}  # uniformly random arrival times between [0, 1] for random input
+
 
         result = secretary_dynkin(values, arrival_times, threshold)
 
@@ -76,7 +96,8 @@ def run_simulation():
         output_text.insert(tk.END, "Please enter valid numbers.")
 
 
-# GUI
+# ---------------- UI ----------------
+
 root = tk.Tk()
 root.title("Dynkin Secretary Problem")
 root.geometry("800x600")
